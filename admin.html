@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co; img-src 'self' data: blob:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:,">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>교사 관리 — 수행평가 피드백</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="awrap">
+  <div class="topbar">
+    <div class="brand"><b>교사 관리</b> · 수행평가 피드백</div>
+    <div id="topActions" class="hidden">
+      <button class="btn small" id="btnRefresh" type="button">새로고침</button>
+      <button class="btn small" id="btnLogout" type="button">로그아웃</button>
+    </div>
+  </div>
+
+  <section id="viewLogin" class="card login">
+    <h1>교사 로그인</h1>
+    <p class="sub">관리자 비밀번호를 입력하세요.</p>
+    <form id="loginForm" autocomplete="off">
+      <label for="tpw">비밀번호</label>
+      <input id="tpw" type="password" maxlength="100" required>
+      <button class="btn primary" type="submit">로그인</button>
+      <div class="msg err" id="loginMsg" role="alert"></div>
+    </form>
+  </section>
+
+  <main id="viewAdmin" class="hidden">
+    <section class="card stats" id="stats"></section>
+
+    <section class="card">
+      <div class="settings">
+        <label class="tog"><input type="checkbox" id="setOpen"> 학생 로그인 허용(열람 기간)</label>
+        <label class="tog"><input type="checkbox" id="setScores"> 문항별 정오표 표시</label>
+        <label class="tog"><input type="checkbox" id="setScans"> 답안지 스캔본 표시</label>
+        <span class="grow"></span>
+        <button class="btn small" id="btnImport" type="button">데이터 가져오기</button>
+        <button class="btn small" id="btnCsv" type="button">CSV 다운로드</button>
+        <button class="btn small" id="btnXlsx" type="button">엑셀 다운로드</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <input type="search" id="q" placeholder="학번 또는 이름 검색">
+        <select id="fClass"><option value="">전체 수업반</option></select>
+        <select id="fStatus">
+          <option value="">전체 상태</option><option value="pub">공개</option><option value="unpub">비공개</option>
+          <option value="nofb">피드백 없음</option><option value="nopw">비밀번호 없음</option><option value="locked">로그인 잠김</option>
+        </select>
+      </div>
+      <div class="bulk">
+        <span id="selCount">0명 선택</span>
+        <button class="btn small" id="btnPub" type="button">선택 공개</button>
+        <button class="btn small" id="btnUnpub" type="button">선택 비공개</button>
+        <button class="btn small" id="btnSlips" type="button">선택 학생 로그인 안내문</button>
+      </div>
+      <div class="tablewrap">
+        <table class="list">
+          <thead><tr><th><input type="checkbox" id="chkAll" aria-label="전체 선택"></th><th>수업반</th><th>학번</th><th>이름</th><th>점수</th><th>공개</th><th>비밀번호</th><th>답안지</th><th>수정일</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="listHint"></p>
+    </section>
+  </main>
+</div>
+
+<!-- 피드백 편집 -->
+<div class="modal hidden" id="edModal" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+  <div class="sheet wide">
+    <div class="edhead"><h2 id="edTitle">피드백 편집</h2><button class="btn small" id="edClose" type="button">닫기</button></div>
+    <div class="pwbox">
+      <b>비밀번호 관리</b> <span id="edPwState" class="muted"></span>
+      <div class="pwrow">
+        <input type="text" id="edPw" placeholder="새 비밀번호 (예: 전화번호 뒷 4자리)" maxlength="40" autocomplete="off">
+        <button class="btn small" id="edPwSet" type="button">이 번호로 설정</button>
+        <button class="btn small" id="edPwRand" type="button">임의 6자리 발급</button>
+        <button class="btn small" id="edUnlock" type="button">잠금 해제</button>
+      </div>
+      <div class="msg" id="edPwMsg"></div>
+    </div>
+    <label for="edTitleInput">수행평가명</label><input type="text" id="edTitleInput">
+    <div id="edLists"></div>
+    <label for="edSummary">④ 종합 피드백</label><textarea id="edSummary" rows="7"></textarea>
+    <div class="row2">
+      <label class="tog"><input type="checkbox" id="edPublished"> 학생에게 공개</label>
+      <span class="grow"></span>
+      <button class="btn primary" id="edSave" type="button">저장</button>
+    </div>
+    <div class="msg" id="edMsg"></div>
+  </div>
+</div>
+
+<!-- 가져오기 -->
+<div class="modal hidden" id="imModal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
+  <div class="sheet">
+    <div class="edhead"><h2 id="imTitle">데이터 가져오기</h2><button class="btn small" id="imClose" type="button">닫기</button></div>
+    <p class="muted small">채점 도구가 만든 <b>import_*.json</b> 파일을 선택하세요. 가져온 피드백은 모두 <b>비공개</b>로 들어가며, 검토 후 공개하면 됩니다.</p>
+    <input type="file" id="imFile" accept=".json,application/json">
+    <div id="imPreview" class="muted small"></div>
+    <label class="tog"><input type="checkbox" id="imOverwrite"> 이미 비밀번호가 있는 학생도 파일의 초기 비밀번호로 덮어쓰기</label>
+    <div class="row2"><span class="grow"></span><button class="btn primary" id="imGo" type="button" disabled>가져오기</button></div>
+    <div class="msg" id="imMsg"></div>
+  </div>
+</div>
+
+<!-- 로그인 안내문 -->
+<div class="modal hidden" id="slipModal" role="dialog" aria-modal="true" aria-labelledby="slipTitle">
+  <div class="sheet wide">
+    <div class="edhead"><h2 id="slipTitle">로그인 안내문</h2><span class="grow"></span><button class="btn small" id="slipPrint" type="button">인쇄</button><button class="btn small" id="slipClose" type="button">닫기</button></div>
+    <p class="muted small noprint">서버에는 비밀번호가 해시로만 저장되어 원래 번호를 다시 볼 수 없습니다. 이 화면에서 '임의 6자리 발급'으로 만든 번호만 표시되고, 나머지는 '선생님께 받은 번호(전화번호 뒷 4자리)'로 안내됩니다.</p>
+    <div id="slips" class="slips"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
