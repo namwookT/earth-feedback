@@ -122,3 +122,5 @@ body.wide .wrap{max-width:1180px}
 .detail .placeholder{color:var(--muted);font-size:14.5px;text-align:center;padding:28px 6px}
 
 .legend .lg-good{background:rgba(70,140,255,.45)} .legend .lg-fix{background:rgba(255,85,85,.45)} .legend .lg-improve{background:rgba(60,200,110,.45)}
+
+.tag.preview{background:#fde8c8;color:#7a4300;margin-left:6px}

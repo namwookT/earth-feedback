@@ -189,8 +189,10 @@
   }
 
   function render() {
+    $("btnPw").classList.toggle("hidden", !!D.preview);
     const hero = `<section class="card hero"><div class="who">${esc(D.name)}<small>${esc(D.student_id)}</small></div>` +
       `<div class="title">${esc(D.title || "")}</div>` +
+      (D.preview ? `<span class="tag preview">교사 미리보기${D.is_public === false ? " · 학생에게 아직 비공개" : ""}</span>` : "") +
       (D.updated_at ? `<span class="tag">피드백 업데이트 ${esc(new Date(D.updated_at).toLocaleDateString("ko-KR"))}</span>` : "") + "</section>";
     if (!D.published) {
       $("viewFeedback").innerHTML = hero + '<section class="card notice"><div class="big" aria-hidden="true">⏳</div>' +

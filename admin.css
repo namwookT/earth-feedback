@@ -46,3 +46,6 @@ table.list tr:hover td{background:#fafcff}
   .noprint,#slipModal .edhead{display:none}
 }
 #edModal .row2 .btn,#imModal .row2 .btn{flex:none}
+
+.mkkey{font:700 1.6rem/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-align:center;padding:12px;border:1px dashed #999;border-radius:8px;user-select:all}
+.sheet.mk{max-width:520px}

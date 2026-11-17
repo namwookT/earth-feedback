@@ -26,6 +26,25 @@
     DATA = { students: [], settings: {} }; $("rows").innerHTML = "";
   }
 
+
+  // ---------- 마스터키 ----------
+  async function mkStatus() {
+    const r = await call("admin_master_status");
+    $("mkStatus").textContent = r.active ? `현재 마스터키 사용 중 (발급: ${new Date(r.set_at).toLocaleString("ko-KR")})` : "현재 발급된 마스터키가 없어요.";
+    $("mkRevoke").disabled = !r.active;
+  }
+  $("btnMaster").addEventListener("click", async () => { $("mkKey").classList.add("hidden"); $("mkKey").textContent = ""; $("mkModal").classList.remove("hidden"); await mkStatus(); });
+  $("mkClose").addEventListener("click", () => { $("mkModal").classList.add("hidden"); $("mkKey").textContent = ""; });
+  $("mkIssue").addEventListener("click", async () => {
+    if (!confirm("새 마스터키를 발급할까요? 이전 키는 즉시 무효가 됩니다.")) return;
+    const r = await call("admin_issue_master_key");
+    if (r.ok) { $("mkKey").textContent = r.key; $("mkKey").classList.remove("hidden"); await mkStatus(); }
+  });
+  $("mkRevoke").addEventListener("click", async () => {
+    if (!confirm("마스터키를 폐기할까요?")) return;
+    await call("admin_revoke_master_key"); $("mkKey").classList.add("hidden"); $("mkKey").textContent = ""; await mkStatus();
+  });
+
   // ---------- 목록 ----------
   async function load() {
     const r = await call("admin_list");
