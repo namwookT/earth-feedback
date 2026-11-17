@@ -69,7 +69,8 @@
     const cells = [
       ["전체 학생", S.length], ["피드백 등록", S.filter(hasFb).length], ["공개", S.filter(s => s.published).length],
       ["비밀번호 설정", S.filter(s => s.has_password).length], ["학생이 변경", S.filter(s => s.pw_changed_by_student).length],
-      ["로그인 잠김", S.filter(s => s.locked).length]
+      ["로그인 잠김", S.filter(s => s.locked).length],
+      ["로그인한 학생", S.filter(s => s.login_count > 0).length], ["공개·미로그인", S.filter(s => s.published && !s.login_count).length]
     ].concat(Object.keys(byClass).sort().map(c => ["수업반 " + c, byClass[c]]));
     $("stats").innerHTML = cells.map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join("");
   }
@@ -80,9 +81,17 @@
       (!q || s.student_id.toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q)) &&
       (!c || s.class_room === c) &&
       (!st || (st === "pub" && s.published) || (st === "unpub" && !s.published && hasFb(s)) || (st === "nofb" && !hasFb(s)) ||
-        (st === "nopw" && !s.has_password) || (st === "locked" && s.locked)));
+        (st === "nopw" && !s.has_password) || (st === "locked" && s.locked) ||
+        (st === "loggedin" && s.login_count > 0) || (st === "notlogged" && s.published && !s.login_count)));
   }
 
+  function loginCell(s) {
+    if (s.login_count > 0) {
+      const t = new Date(s.last_login_at).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      return `<span class="badge on" title="첫 로그인 ${esc(new Date(s.first_login_at).toLocaleString("ko-KR"))}">${esc(s.login_count)}회</span> <span class="muted small">${esc(t)}</span>`;
+    }
+    return s.published ? '<span class="badge warn">미로그인</span>' : '<span class="muted">-</span>';
+  }
   function pwBadge(s) {
     if (s.locked) return '<span class="badge lock">잠김</span>';
     if (!s.has_password) return '<span class="badge warn">없음</span>';
@@ -96,6 +105,7 @@
       <td>${esc(s.class_room)}</td><td>${esc(s.student_id)}</td><td>${esc(s.name)}</td>
       <td>${s.total != null ? esc(s.total) + "/25" : "-"}</td>
       <td>${hasFb(s) ? (s.published ? '<span class="badge on">공개</span>' : '<span class="badge off">비공개</span>') : '<span class="badge warn">없음</span>'}</td>
+      <td>${loginCell(s)}</td>
       <td>${pwBadge(s)}</td><td>${s.scan_count ? esc(s.scan_count) + "쪽" : '<span class="muted">-</span>'}</td>
       <td class="muted small">${s.updated_at ? esc(new Date(s.updated_at).toLocaleString("ko-KR")) : ""}</td>
       <td><button class="btn small ed" data-id="${esc(s.student_id)}" type="button">편집</button></td></tr>`).join("");
@@ -248,7 +258,8 @@
     return DATA.students.map(s => {
       const row = { "수업반": s.class_room, "학번": s.student_id, "이름": s.name, "공개": s.published ? "공개" : "비공개",
         "총점(25)": s.total, "획득(15)": s.earned, "수행평가명": s.title || "",
-        "답안지(쪽)": s.scan_count || 0, "잘한 점": flat(s.strengths), "보완할 점": flat(s.improvements), "개선 방향": flat(s.directions), "종합 피드백": s.summary || "" };
+        "답안지(쪽)": s.scan_count || 0, "로그인 횟수": s.login_count || 0,
+        "첫 로그인": s.first_login_at ? new Date(s.first_login_at).toLocaleString("ko-KR") : "", "마지막 로그인": s.last_login_at ? new Date(s.last_login_at).toLocaleString("ko-KR") : "", "잘한 점": flat(s.strengths), "보완할 점": flat(s.improvements), "개선 방향": flat(s.directions), "종합 피드백": s.summary || "" };
       (s.items || []).forEach(i => { row[i.q] = i.score === 1 ? 1 : i.score === 0 ? 0 : ""; });
       return row;
     });
